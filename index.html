@@ -1,17 +1,286 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Malla Interactiva de Sistemas</title>
-  <link rel="stylesheet" href="style.css">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Malla Curricular Lic. en Sistemas</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Montserrat&display=swap');
+
+  body {
+    font-family: 'Montserrat', sans-serif;
+    background: #B3CFE5;
+    margin: 0;
+    padding: 20px;
+    color: #1A3D63;
+  }
+  h1 {
+    text-align: center;
+    margin-bottom: 30px;
+    font-weight: 700;
+  }
+  .malla {
+    display: flex;
+    gap: 20px;
+    overflow-x: auto;
+    padding-bottom: 10px;
+  }
+  .ciclo {
+    background: #4A7FA7;
+    border-radius: 10px;
+    padding: 10px;
+    min-width: 280px;
+    box-shadow: 2px 2px 8px rgba(0,0,0,0.15);
+  }
+  .ciclo h2 {
+    color: #B3CFE5;
+    margin-top: 0;
+    font-weight: 600;
+    font-size: 1.3rem;
+    border-bottom: 2px solid #B3CFE5;
+    padding-bottom: 5px;
+  }
+  .cuatrimestre {
+    margin-top: 15px;
+    border-top: 1px solid #B3CFE5;
+    padding-top: 10px;
+  }
+  .cuatrimestre h3 {
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: #DDE9F5;
+    font-size: 1.1rem;
+  }
+  .materia {
+    background: #B3CFE5;
+    margin-bottom: 8px;
+    padding: 8px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    position: relative;
+    color: #1A3D63;
+    user-select: none;
+    transition: background-color 0.3s, box-shadow 0.3s;
+  }
+  .materia.aprobada {
+    background: #1A3D63;
+    color: #B3CFE5;
+    font-weight: 700;
+    box-shadow: 0 0 8px #1A3D63aa;
+  }
+  .materia.bloqueada {
+    background: #A1B9D3;
+    color: #5a6a7f;
+    cursor: not-allowed;
+  }
+  /* Tooltip container */
+  .materia.bloqueada:hover::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    left: 105%;
+    top: 50%;
+    transform: translateY(-50%);
+    background: #1A3D63;
+    color: #B3CFE5;
+    padding: 6px 10px;
+    border-radius: 6px;
+    white-space: pre-line;
+    font-size: 0.85rem;
+    min-width: 160px;
+    z-index: 10;
+    box-shadow: 2px 2px 10px rgba(0,0,0,0.3);
+  }
+  /* Scrollbar */
+  .malla::-webkit-scrollbar {
+    height: 10px;
+  }
+  .malla::-webkit-scrollbar-thumb {
+    background: #1A3D63;
+    border-radius: 10px;
+  }
+  .malla::-webkit-scrollbar-track {
+    background: #B3CFE5;
+  }
+</style>
 </head>
 <body>
+  <h1>Malla Curricular Lic. en Sistemas</h1>
+  <div class="malla" id="malla"></div>
 
-  <h1>Malla Interactiva de Sistemas</h1>
+<script>
+  // Definimos las materias con su nombre, ciclo, cuatrimestre, y correlativas (por nombre)
+  const materias = [
+    // Primer año
+    {id:"epya", nombre:"Expresión de problemas y algoritmos", ciclo:1, cuatri:1, habilita:["programacion","aed"]},
+    {id:"oc", nombre:"Organización de computadoras", ciclo:1, cuatri:1, habilita:["arquitectura"]},
+    {id:"em", nombre:"Elementos de matemática", ciclo:1, cuatri:1, habilita:["matematica_discreta","am1","redes"]},
 
-  <section id="malla"></section>
+    {id:"programacion", nombre:"Programación", ciclo:1, cuatri:2, requiere:["epya"], habilita:["ingenieria_software_1","bd_intro","aed","seminario_lenguajes","sistemas_op","programacion_concurrente","conceptos_paradigmas"]},
+    {id:"arquitectura", nombre:"Arquitectura de computadoras", ciclo:1, cuatri:2, requiere:["oc"], habilita:[]},
+    {id:"taller_ingles_1", nombre:"Taller de Inglés 1", ciclo:1, cuatri:2, habilita:["taller_ingles_2"]},
 
-  <script src="script.js"></script>
+    // Segundo año
+    {id:"ingenieria_software_1", nombre:"Ingeniería en Software 1", ciclo:2, cuatri:3, requiere:["programacion"], habilita:["orientacion_objetos_1","ingenieria_software_2","bd_1"]},
+    {id:"bd_intro", nombre:"Introducción a la base de datos", ciclo:2, cuatri:3, requiere:["programacion"], habilita:["bd_1"]},
+    {id:"aed", nombre:"Algoritmos y Estructura de datos", ciclo:2, cuatri:3, requiere:["programacion","epya"], habilita:["orientacion_objetos_1"]},
+    {id:"seminario_pn", nombre:"Seminario de pensamiento nacional y latinoamericano", ciclo:2, cuatri:3, habilita:[]},
+
+    {id:"taller_ingles_2", nombre:"Taller de inglés 2", ciclo:2, cuatri:4, requiere:["taller_ingles_1"], habilita:["taller_ingles_3"]},
+    {id:"seminario_lenguajes", nombre:"Seminario de lenguajes", ciclo:2, cuatri:4, requiere:["programacion"], habilita:[]},
+    {id:"sistemas_op", nombre:"Introducción a los sistemas operativos", ciclo:2, cuatri:4, requiere:["programacion"], habilita:["redes","sistemas_operativos"]},
+    {id:"matematica_discreta", nombre:"Matemática discreta", ciclo:2, cuatri:4, requiere:["em"], habilita:["probabilidad_estadistica"]},
+
+    // Tercer año
+    {id:"orientacion_objetos_1", nombre:"Orientación de objetos 1", ciclo:3, cuatri:5, requiere:["ingenieria_software_1","aed"], habilita:["orientacion_objetos_2"]},
+    {id:"taller_ingles_3", nombre:"Taller de inglés 3", ciclo:3, cuatri:5, requiere:["taller_ingles_2"], habilita:[]},
+    {id:"programacion_concurrente", nombre:"Programación concurrente", ciclo:3, cuatri:5, requiere:["programacion"], habilita:["desarrollo_software_distribuidos"]},
+    {id:"ingenieria_software_2", nombre:"Ingeniería en software 2", ciclo:3, cuatri:5, requiere:["ingenieria_software_1"], habilita:["ingenieria_software_3","desarrollo_software_distribuidos","taller_metodologia_investigacion"]},
+
+    {id:"am1", nombre:"Análisis Matemático 1", ciclo:3, cuatri:6, requiere:["em"], habilita:["am2","fundamentos_teoria_computacion","probabilidad_estadistica"]},
+    {id:"bd_1", nombre:"Bases de datos 1", ciclo:3, cuatri:6, requiere:["ingenieria_software_1","bd_intro"], habilita:["bd_2","taller_metodologia_investigacion"]},
+    {id:"redes", nombre:"Redes y Comunicaciones", ciclo:3, cuatri:6, requiere:["em","sistemas_op"], habilita:["desarrollo_software_distribuidos","taller_metodologia_investigacion"]},
+    {id:"seminario_jd", nombre:"Seminario de justicia y derechos humanos", ciclo:3, cuatri:6, habilita:[]},
+    {id:"practicas_1", nombre:"Prácticas preprofesionales", ciclo:3, cuatri:6, habilita:["practicas_2"]},
+
+    // Cuarto año
+    {id:"conceptos_paradigmas", nombre:"Conceptos y Paradigmas de Lenguajes de Programación", ciclo:4, cuatri:7, requiere:["programacion"], habilita:["fundamentos_teoria_computacion"]},
+    {id:"orientacion_objetos_2", nombre:"Orientación a Objetos 2", ciclo:4, cuatri:7, requiere:["orientacion_objetos_1"], habilita:["taller_metodologia_investigacion"]},
+    {id:"ingenieria_software_3", nombre:"Ingeniería de Software 3", ciclo:4, cuatri:7, requiere:["ingenieria_software_2"], habilita:[]},
+    {id:"bd_2", nombre:"Bases de Datos 2", ciclo:4, cuatri:7, requiere:["bd_1"], habilita:[]},
+    {id:"sistemas_operativos", nombre:"Sistemas Operativos", ciclo:4, cuatri:7, requiere:["sistemas_op"], habilita:["taller_metodologia_investigacion"]},
+
+    {id:"am2", nombre:"Análisis matemático 2", ciclo:4, cuatri:8, requiere:["am1"], habilita:[]},
+    {id:"fundamentos_teoria_computacion", nombre:"Fundamentos de Teoría de la Computación", ciclo:4, cuatri:8, requiere:["conceptos_paradigmas","am1"], habilita:[]},
+    {id:"desarrollo_software_distribuidos", nombre:"Desarrollo de Software en Sistemas Distribuidos", ciclo:4, cuatri:8, requiere:["programacion_concurrente","ingenieria_software_2","redes"], habilita:[]},
+    {id:"sistemas_organizaciones", nombre:"Sistemas y Organizaciones", ciclo:4, cuatri:8, requiere:["programacion"], habilita:["aspectos_sociales"]},
+
+    // Quinto año
+    {id:"proyecto_software", nombre:"Proyecto de Software", ciclo:5, cuatri:9, requiere:["ingenieria_software_3","taller_metodologia_investigacion","probabilidad_estadistica"], habilita:["taller_proyectos"]},
+    {id:"taller_metodologia_investigacion", nombre:"Taller de Metodología de la Investigación", ciclo:5, cuatri:9, requiere:["ingenieria_software_2","bd_1","orientacion_objetos_2","sistemas_operativos","redes"], habilita:["taller_proyectos"]},
+    {id:"probabilidad_estadistica", nombre:"Probabilidad y Estadística", ciclo:5, cuatri:9, requiere:["matematica_discreta","am1"], habilita:["taller_proyectos"]},
+    {id:"seminario_optativo", nombre:"Seminario Optativo", ciclo:5, cuatri:9, habilita:[]},
+
+    {id:"escenarios_tecnologicos", nombre:"Escenarios Tecnológicos", ciclo:5, cuatri:10, habilita:[]},
+    {id:"aspectos_sociales", nombre:"Aspectos sociales y profesionales de la Informática", ciclo:5, cuatri:10, requiere:["sistemas_organizaciones"], habilita:[]},
+    {id:"practicas_2", nombre:"Prácticas Preprofesionales 2", ciclo:5, cuatri:10, requiere:["practicas_1"], habilita:[]},
+    {id:"taller_proyectos", nombre:"Taller de Proyectos I+D+i", ciclo:5, cuatri:10, requiere:["proyecto_software","taller_metodologia_investigacion","probabilidad_estadistica"], habilita:[]},
+  ];
+
+  // Guardar aprobadas en localStorage
+  const STORAGE_KEY = "malla_aprobadas_sistemas";
+
+  // Cargar aprobadas
+  let aprobadas = new Set(JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]"));
+
+  // Index por id para acceso rápido
+  const materiasMap = {};
+  materias.forEach(m => materiasMap[m.id] = m);
+
+  // Para mostrar materias agrupadas por ciclo y cuatri
+  function agruparMaterias() {
+    const agrupado = {};
+    materias.forEach(m => {
+      if (!agrupado[m.ciclo]) agrupado[m.ciclo] = {};
+      if (!agrupado[m.ciclo][m.cuatri]) agrupado[m.ciclo][m.cuatri] = [];
+      agrupado[m.ciclo][m.cuatri].push(m);
+    });
+    return agrupado;
+  }
+
+  // Verifica si la materia está desbloqueada (todas sus correlativas aprobadas)
+  function estaDesbloqueada(materia) {
+    if (!materia.requiere || materia.requiere.length === 0) return true;
+    return materia.requiere.every(req => aprobadas.has(req));
+  }
+
+  // Generar tooltip con materias que faltan aprobar para desbloquear
+  function tooltipFaltantes(materia) {
+    if (!materia.requiere || materia.requiere.length === 0) return "";
+    const faltan = materia.requiere.filter(req => !aprobadas.has(req)).map(req => materiasMap[req]?.nombre || req);
+    return "Falta aprobar:\n" + faltan.join("\n");
+  }
+
+  // Crear y renderizar la malla
+  function renderizarMalla() {
+    const container = document.getElementById("malla");
+    container.innerHTML = "";
+
+    const agrupado = agruparMaterias();
+
+    // Ordenar ciclos
+    const ciclos = Object.keys(agrupado).sort((a,b)=>a-b);
+
+    ciclos.forEach(cicloNum => {
+      const cicloDiv = document.createElement("div");
+      cicloDiv.className = "ciclo";
+
+      // Título ciclo (por ejemplo: Primer Año, Segundo Año)
+      const nombresCiclo = ["Primer Año", "Segundo Año", "Tercer Año", "Cuarto Año", "Quinto Año"];
+      const tituloCiclo = nombresCiclo[cicloNum-1] || `Ciclo ${cicloNum}`;
+      const h2 = document.createElement("h2");
+      h2.textContent = tituloCiclo;
+      cicloDiv.appendChild(h2);
+
+      // Cuatrimestres ordenados
+      const cuatris = Object.keys(agrupado[cicloNum]).sort((a,b)=>a-b);
+
+      cuatris.forEach(cuatriNum => {
+        const cuatriDiv = document.createElement("div");
+        cuatriDiv.className = "cuatrimestre";
+
+        // Título cuatrimestre: Primer cuatrimestre, segundo cuatrimestre, etc.
+        const nombresCuatri = ["Primer cuatrimestre","Segundo cuatrimestre","Tercer cuatrimestre","Cuarto cuatrimestre","Quinto cuatrimestre","Sexto cuatrimestre","Séptimo cuatrimestre","Octavo cuatrimestre","Noveno cuatrimestre","Décimo cuatrimestre"];
+        const h3 = document.createElement("h3");
+        h3.textContent = nombresCuatri[cuatriNum-1] || `Cuatrimestre ${cuatriNum}`;
+        cuatriDiv.appendChild(h3);
+
+        agrupado[cicloNum][cuatriNum].forEach(materia => {
+          const div = document.createElement("div");
+          div.className = "materia";
+          div.textContent = materia.nombre;
+          div.dataset.id = materia.id;
+
+          // Estado aprobado
+          if (aprobadas.has(materia.id)) {
+            div.classList.add("aprobada");
+          }
+
+          // Estado bloqueada si no está desbloqueada
+          if (!estaDesbloqueada(materia)) {
+            div.classList.add("bloqueada");
+            div.dataset.tooltip = tooltipFaltantes(materia);
+          }
+
+          // Click solo si no bloqueada
+          div.addEventListener("click", () => {
+            if (div.classList.contains("bloqueada")) return;
+
+            if (aprobadas.has(materia.id)) {
+              aprobadas.delete(materia.id);
+              div.classList.remove("aprobada");
+            } else {
+              aprobadas.add(materia.id);
+              div.classList.add("aprobada");
+            }
+
+            // Guardar progreso
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(Array.from(aprobadas)));
+
+            // Actualizar desbloqueo
+            renderizarMalla();
+          });
+
+          cuatriDiv.appendChild(div);
+        });
+
+        cicloDiv.appendChild(cuatriDiv);
+      });
+
+      container.appendChild(cicloDiv);
+    });
+  }
+
+  renderizarMalla();
+</script>
 </body>
 </html>
